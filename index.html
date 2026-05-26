@@ -1,1 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRUTHLENS | AI Writing Forensics</title>
+    <style>
+        :root {
+            --bg-color: #05050a;
+            --panel-bg: rgba(15, 15, 25, 0.7);
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-red: #ff2a2a;
+            --neon-green: #00ff66;
+            --text-main: #e0e0e0;
+            --text-muted: #888;
+            --border-color: rgba(0, 243, 255, 0.2);
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-blue) var(--bg-color);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--neon-purple);
+            border-radius: 4px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(188, 19, 254, 0.15), transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
+            border-color: rgba(0, 243, 255, 0.4);
+        }
+
+        /* Header */
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 30px 0;
+            position: relative;
+        }
+        
+        .logo-container {
+            display: inline-block;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-family: var(--font-mono);
+            color: var(--neon-blue);
+            font-size: 1rem;
+            letter-spacing: 2px;
+        }
+
+        /* Input Section */
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.4);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--neon-blue);
+        }
+
+        .stats span {
+            background: rgba(0, 243, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .editor-wrapper {
+            position: relative;
+            flex-grow: 1;
+            min-height: 400px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            color: #fff;
+            font-family: var(--font-main);
+            font-size: 1.1rem;
+            resize: vertical;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--neon-purple);
+            box-shadow: inset 0 0 10px rgba(188, 19, 254, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--neon-blue);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:hover {
+            background: rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+        }
+
+        button.primary {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+        }
+        
+        button.primary:hover {
+            background: var(--neon-blue);
+            color: #000;
+        }
+
+        button.danger {
+            border-color: var(--neon-red);
+            color: var(--neon-red);
+        }
+        button.danger:hover {
+            background: var(--neon-red);
+            color: #fff;
+        }
+
+        /* Scanning Animation overlay */
+        .scan-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--neon-blue);
+            box-shadow: 0 0 15px 5px rgba(0, 243, 255, 0.5);
+            display: none;
+            z-index: 10;
+        }
+
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Dashboard Results Section */
+        .results-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .main-score-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .circular-chart {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(var(--bg-color) 0%, var(--bg-color) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            transition: background 1s ease-out;
+        }
+
+        .circular-chart::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: var(--panel-bg);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .chart-value {
+            position: relative;
+            z-index: 2;
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: var(--font-mono);
+        }
+
+        .chart-label {
+            position: absolute;
+            bottom: -30px;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-family: var(--font-mono);
+        }
+
+        .ai-text { color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple); }
+        .human-text { color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+
+        .meter-container {
+            margin-bottom: 15px;
+        }
+
+        .meter-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+        }
+
+        .meter-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 5px;
+            transition: width 1.5s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        .fill-purple { background: linear-gradient(90deg, #5900ff, var(--neon-purple)); }
+        .fill-blue { background: linear-gradient(90deg, #0051ff, var(--neon-blue)); }
+        .fill-green { background: linear-gradient(90deg, #009933, var(--neon-green)); }
+        .fill-red { background: linear-gradient(90deg, #990000, var(--neon-red)); }
+
+        /* Flagged Reasons */
+        .flagged-reasons {
+            list-style: none;
+            margin-top: 10px;
+        }
+        
+        .flagged-reasons li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.05);
+            padding: 10px 10px 10px 30px;
+            border-left: 3px solid #ffd700;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .flagged-reasons li::before {
+            content: '⚠';
+            position: absolute;
+            left: 10px;
+            top: 10px;
+        }
+
+        /* Highlighted Text Box */
+        .highlight-box {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-top: 15px;
+        }
+
+        .hl-ai {
+            background: rgba(188, 19, 254, 0.3);
+            border-bottom: 2px solid var(--neon-purple);
+            padding: 0 4px;
+            border-radius: 3px;
+            cursor: help;
+        }
+        .hl-struct {
+            background: rgba(0, 243, 255, 0.3);
+            border-bottom: 2px solid var(--neon-blue);
+            padding: 0 4px;
+            border-radius: 3px;
+        }
+
+        /* Terminal Simulation */
+        .terminal {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            height: 150px;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .term-line {
+            color: var(--neon-green);
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+        .term-line.warn { color: #ffaa00; }
+        .term-line.err { color: var(--neon-red); }
+
+        /* History Section */
+        .history-section {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .history-item {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .history-item:hover {
+            background: rgba(0, 243, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .history-preview {
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+        }
+        .history-score {
+            font-weight: bold;
+        }
+
+        /* Footer */
+        footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 0 20px 0;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 40px;
+        }
+        
+        footer span {
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.5);
+        }
+
+        /* Loading overlay */
+        .overlay {
+            position: absolute;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 50;
+            border-radius: 12px;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid transparent;
+            border-top-color: var(--neon-blue);
+            border-bottom-color: var(--neon-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .hidden { display: none !important; }
+
+        .section-title {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo-container">
+            <h1>TRUTHLENS</h1>
+            <div class="subtitle">AI WRITING FORENSICS PLATFORM // NEURAL SCAN V2.4</div>
+        </div>
+    </header>
+
+    <div class="input-section">
+        <div class="glass-card">
+            <div class="section-title">
+                Target Acquisition
+                <div class="btn-group">
+                    <button onclick="loadSampleText()">Sample Text</button>
+                    <button onclick="clearText()" class="danger">Clear</button>
+                </div>
+            </div>
+            
+            <div class="toolbar">
+                <div class="stats">
+                    <span id="charCount">Chars: 0</span>
+                    <span id="wordCount">Words: 0</span>
+                    <span id="sentCount">Sentences: 0</span>
+                    <span id="readTime">Read Time: 0s</span>
+                </div>
+            </div>
+
+            <div class="editor-wrapper" style="margin-top: 15px;">
+                <div class="scan-line" id="scanLine"></div>
+                <textarea id="textInput" placeholder="Paste target document here for forensic analysis... (Minimum 50 words recommended)"></textarea>
+            </div>
+
+            <div style="margin-top: 15px; text-align: right;">
+                <button class="primary" onclick="startAnalysis()" style="width: 100%; font-size: 1.2rem; padding: 15px;">
+                    Initiate Forensic Scan
+                </button>
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <div class="section-title">Live Terminal Stream</div>
+            <div class="terminal" id="terminalStream">
+                <div class="term-line">> System initialized. Ready for input.</div>
+                <div class="term-line">> Awaiting forensic targets...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-section">
+        <div class="glass-card" id="resultsOverlayParent">
+            <div class="overlay" id="analysisOverlay">
+                <div class="spinner"></div>
+                <div style="margin-top: 15px; font-family: var(--font-mono); color: var(--neon-blue);" id="overlayText">
+                    ANALYZING SYNTAX PATTERNS...
+                </div>
+            </div>
+
+            <div class="section-title">
+                Forensic Analysis Report
+                <span id="confidenceBadge" style="font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px;">Confidence: --</span>
+            </div>
+            
+            <div class="main-score-container">
+                <div style="position: relative;">
+                    <div class="circular-chart" id="aiChart">
+                        <div class="chart-value ai-text" id="aiScoreVal">0%</div>
+                    </div>
+                    <div class="chart-label ai-text">AI PROBABILITY</div>
+                </div>
+                
+                <div style="position: relative;">
+                    <div class="circular-chart" id="humanChart">
+                        <div class="chart-value human-text" id="humanScoreVal">0%</div>
+                    </div>
+                    <div class="chart-label human-text">HUMAN PROBABILITY</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <div class="meter-container">
+                    <div class="meter-label"><span>Perplexity (Predictability)</span> <span id="valPerplexity">--</span></div>
+                    <div class="meter-bar"><div class="meter-fill fill-blue" id="barPerplexity"></div></div>
+                </div>
+                <div class="meter-container">
+                    <div class="meter-label"><span>Burstiness (Variance)</span> <span id="valBurstiness">--</span></div>
+                    <div class="meter-bar"><div class="meter-fill fill-green" id="barBurstiness"></div></div>
+                </div>
+                <div class="meter-container">
+                    <div class="meter-label"><span>Vocabulary Diversity</span> <span id="valVocab">--</span></div>
+                    <div class="meter-bar"><div class="meter-fill fill-purple" id="barVocab"></div></div>
+                </div>
+                <div class="meter-container">
+                    <div class="meter-label"><span>Emotional Variation</span> <span id="valEmotion">--</span></div>
+                    <div class="meter-bar"><div class="meter-fill fill-red" id="barEmotion"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="section-title">Flagged Anomalies</div>
+            <ul class="flagged-reasons" id="flaggedList">
+                <li style="color: var(--text-muted); border-color: #555; background: transparent; padding-left: 10px;">
+                    <style>#flaggedList li::before { display: none; }</style>
+                    Awaiting analysis...
+                </li>
+            </ul>
+        </div>
+
+        <div class="glass-card">
+            <div class="section-title">Text Forensic Heatmap</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Highlighted sections indicate high probability of algorithmic generation or structural rigidity.</p>
+            <div class="highlight-box" id="highlightBox">
+                No text analyzed yet.
+            </div>
+        </div>
+    </div>
+
+    <div class="history-section glass-card">
+        <div class="section-title">
+            Local Archives
+            <div class="btn-group">
+                <button onclick="exportHistory()">Export TXT</button>
+                <button onclick="clearHistory()" class="danger">Clear All</button>
+            </div>
+        </div>
+        <div class="history-grid" id="historyGrid">
+            </div>
+    </div>
+
+    <footer>
+        Developed by <span>Arideep Kanshabanik</span><br>
+        <small style="opacity: 0.5; margin-top: 5px; display: inline-block;">TRUTHLENS FORENSIC ENGINE V2.4 | OFFLINE MODE ACTIVE</small>
+    </footer>
+</div>
+
+<script>
+    // --- HEURISTICS & CONFIG ---
+    const AI_PHRASES = [
+        "delve into", "tapestry", "testament", "multifaceted", "in conclusion", 
+        "it is important to note", "crucial to remember", "alignment", "seamlessly", 
+        "foster", "underscore", "navigating the", "realm of", "ever-evolving",
+        "intricate", "demystify", "embark on", "shed light", "pivotal",
+        "ultimately", "by and large", "in summary", "moreover", "furthermore",
+        "to summarize", "let's dive in", "dive deep", "unleash", "unlocking"
+    ];
+
+    const FORMAL_TRANSITIONS = [
+        "additionally", "consequently", "therefore", "however", "nevertheless", "thus"
+    ];
+
+    // --- STATE MANAGEMENT ---
+    let appState = {
+        history: [],
+        currentText: ""
+    };
+
+    // --- DOM ELEMENTS ---
+    const DOM = {
+        input: document.getElementById('textInput'),
+        charCount: document.getElementById('charCount'),
+        wordCount: document.getElementById('wordCount'),
+        sentCount: document.getElementById('sentCount'),
+        readTime: document.getElementById('readTime'),
+        scanLine: document.getElementById('scanLine'),
+        terminal: document.getElementById('terminalStream'),
+        overlay: document.getElementById('analysisOverlay'),
+        overlayText: document.getElementById('overlayText'),
+        aiChart: document.getElementById('aiChart'),
+        humanChart: document.getElementById('humanChart'),
+        aiScoreVal: document.getElementById('aiScoreVal'),
+        humanScoreVal: document.getElementById('humanScoreVal'),
+        confBadge: document.getElementById('confidenceBadge'),
+        barPerplexity: document.getElementById('barPerplexity'),
+        barBurstiness: document.getElementById('barBurstiness'),
+        barVocab: document.getElementById('barVocab'),
+        barEmotion: document.getElementById('barEmotion'),
+        valPerplexity: document.getElementById('valPerplexity'),
+        valBurstiness: document.getElementById('valBurstiness'),
+        valVocab: document.getElementById('valVocab'),
+        valEmotion: document.getElementById('valEmotion'),
+        flaggedList: document.getElementById('flaggedList'),
+        highlightBox: document.getElementById('highlightBox'),
+        historyGrid: document.getElementById('historyGrid')
+    };
+
+    // --- INITIALIZATION ---
+    function init() {
+        loadHistory();
+        renderHistory();
+        
+        // Restore autosaved text
+        const savedText = localStorage.getItem('truthlens_autosave');
+        if (savedText) {
+            DOM.input.value = savedText;
+            updateStats();
+        }
+
+        // Event listeners
+        DOM.input.addEventListener('input', () => {
+            updateStats();
+            localStorage.setItem('truthlens_autosave', DOM.input.value);
+        });
+    }
+
+    // --- UTILITIES ---
+    function updateStats() {
+        const text = DOM.input.value;
+        const chars = text.length;
+        const words = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+        const sentences = text.trim() === "" ? 0 : text.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
+        
+        DOM.charCount.innerText = `Chars: ${chars}`;
+        DOM.wordCount.innerText = `Words: ${words}`;
+        DOM.sentCount.innerText = `Sentences: ${sentences}`;
+        DOM.readTime.innerText = `Read Time: ${Math.ceil(words / 200)}m`;
+    }
+
+    function clearText() {
+        DOM.input.value = '';
+        updateStats();
+        localStorage.removeItem('truthlens_autosave');
+        logTerm("Workspace cleared.", "warn");
+    }
+
+    function loadSampleText() {
+        DOM.input.value = "In today's ever-evolving digital landscape, it is important to note that artificial intelligence plays a pivotal role. Navigating the intricate tapestry of modern technology requires a multifaceted approach. Moreover, we must delve into the core concepts to seamlessly foster alignment across various sectors. Ultimately, this serves as a testament to human ingenuity. In conclusion, unlocking this potential is crucial to remember for future generations.";
+        updateStats();
+        logTerm("Sample forensic target loaded.");
+    }
+
+    function logTerm(msg, type="info") {
+        const line = document.createElement('div');
+        line.className = `term-line ${type}`;
+        const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+        line.innerText = `[${time}] > ${msg}`;
+        DOM.terminal.appendChild(line);
+        if (DOM.terminal.childElementCount > 8) {
+            DOM.terminal.removeChild(DOM.terminal.firstChild);
+        }
+    }
+
+    // --- FORENSIC ANALYSIS ENGINE ---
+    function startAnalysis() {
+        const text = DOM.input.value.trim();
+        if (text.split(/\s+/).length < 10) {
+            alert("Error: Target too small. Minimum 10 words required for heuristic analysis.");
+            return;
+        }
+
+        logTerm("Initiating deep neural scan...", "warn");
+        
+        // UI Prep
+        DOM.overlay.style.display = 'flex';
+        DOM.scanLine.style.display = 'block';
+        DOM.scanLine.style.animation = 'scan 2s linear infinite';
+        
+        // Terminal simulation
+        setTimeout(() => logTerm("Analyzing syntactic variance (Burstiness)..."), 500);
+        setTimeout(() => logTerm("Cross-referencing algorithmic vocabulary tables..."), 1200);
+        setTimeout(() => {
+            DOM.overlayText.innerText = "CALCULATING PROBABILITY MATRICES...";
+            logTerm("Generating probability matrices...");
+        }, 1800);
+
+        // Run Logic
+        setTimeout(() => {
+            const results = performHeuristicAnalysis(text);
+            renderResults(results, text);
+            saveToHistory(text, results);
+            
+            // Cleanup UI
+            DOM.overlay.style.display = 'none';
+            DOM.scanLine.style.animation = 'none';
+            DOM.scanLine.style.display = 'none';
+            DOM.overlayText.innerText = "ANALYZING SYNTAX PATTERNS...";
+            logTerm("Scan complete. Results compiled.", "info");
+        }, 3000);
+    }
+
+    function performHeuristicAnalysis(text) {
+        const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        
+        // 1. Burstiness (Variance in sentence length)
+        let sentenceLengths = sentences.map(s => s.trim().split(/\s+/).length);
+        let avgLength = sentenceLengths.reduce((a, b) => a + b, 0) / (sentenceLengths.length || 1);
+        let variance = sentenceLengths.reduce((a, b) => a + Math.pow(b - avgLength, 2), 0) / (sentenceLengths.length || 1);
+        let stdDev = Math.sqrt(variance);
+        
+        // Normalize burstiness score (0-100)
+        // High stdDev (>8) = high burstiness (human)
+        // Low stdDev (<4) = low burstiness (AI)
+        let burstinessScore = Math.min(100, Math.max(0, (stdDev - 2) * 12.5));
+        
+        // 2. Vocabulary Diversity
+        let uniqueWords = new Set(words);
+        let ttr = uniqueWords.size / (words.length || 1); // Type-Token Ratio
+        // Adjust for text length
+        let vocabScore = Math.min(100, (ttr * 150)); 
+        
+        // 3. AI Phrase Detection
+        let aiPhraseCount = 0;
+        let foundPhrases = new Set();
+        AI_PHRASES.forEach(phrase => {
+            const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
+            const matches = text.match(regex);
+            if (matches) {
+                aiPhraseCount += matches.length;
+                foundPhrases.add(phrase);
+            }
+        });
+
+        // 4. Perplexity / Predictability Simulation
+        // For local simulation: high formal transitions + AI phrases = highly predictable
+        let formalCount = 0;
+        FORMAL_TRANSITIONS.forEach(word => {
+            if (words.includes(word)) formalCount++;
+        });
+        let predictabilityScore = Math.min(100, (aiPhraseCount * 15) + (formalCount * 5) + (50 - burstinessScore/2));
+        let perplexityScore = 100 - predictabilityScore; // High perplexity = human
+
+        // 5. Emotional Variation (Heuristic: use of punctuation ! ?, varied sentence starters)
+        let exclamations = (text.match(/!/g) || []).length;
+        let questions = (text.match(/\?/g) || []).length;
+        let emotionScore = Math.min(100, (exclamations * 10) + (questions * 10) + (burstinessScore * 0.3));
+
+        // CALCULATE FINAL PROBABILITY
+        // Base AI score starts based on predictability
+        let aiProb = predictabilityScore; 
+        
+        // Penalize heavily for exact AI phrases
+        aiProb += (aiPhraseCount * 8);
+        
+        // Adjust based on burstiness (robotic uniformity increases AI score)
+        if (burstinessScore < 30) aiProb += 20;
+        if (burstinessScore > 70) aiProb -= 25;
+
+        // Cap values
+        aiProb = Math.max(1, Math.min(99, aiProb));
+        
+        // Inject slight randomness to feel organic (± 2%)
+        aiProb += (Math.random() * 4) - 2;
+        aiProb = Math.round(Math.max(1, Math.min(99, aiProb)));
+        
+        let humanProb = 100 - aiProb;
+
+        // Generate Flagged Reasons
+        let reasons = [];
+        if (aiPhraseCount > 0) reasons.push(`Detected ${aiPhraseCount} highly predictable algorithmic transition phrase(s).`);
+        if (burstinessScore < 40) reasons.push("Sentence structures lack human variance (Uniform Burstiness).");
+        if (predictabilityScore > 70) reasons.push("Lexical predictability is abnormally high for natural human typing.");
+        if (vocabScore < 45) reasons.push("Vocabulary diversity is restricted, indicating generative constraints.");
+        if (reasons.length === 0) {
+            if (humanProb > 80) reasons.push("No significant robotic signatures detected. Variance appears natural.");
+            else reasons.push("Text structure is balanced, but retains slight synthetic undertones.");
+        }
+
+        return {
+            aiProb,
+            humanProb,
+            burstiness: Math.round(burstinessScore),
+            perplexity: Math.round(perplexityScore),
+            vocab: Math.round(vocabScore),
+            emotion: Math.round(emotionScore),
+            reasons,
+            foundPhrases: Array.from(foundPhrases)
+        };
+    }
+
+    function renderResults(res, originalText) {
+        // Update Charts
+        DOM.aiScoreVal.innerText = `${res.aiProb}%`;
+        DOM.humanScoreVal.innerText = `${res.humanProb}%`;
+        
+        DOM.aiChart.style.background = `conic-gradient(var(--neon-purple) 0% ${res.aiProb}%, var(--bg-color) ${res.aiProb}% 100%)`;
+        DOM.humanChart.style.background = `conic-gradient(var(--neon-blue) 0% ${res.humanProb}%, var(--bg-color) ${res.humanProb}% 100%)`;
+
+        // Update Meters
+        updateMeter(DOM.barPerplexity, DOM.valPerplexity, res.perplexity);
+        updateMeter(DOM.barBurstiness, DOM.valBurstiness, res.burstiness);
+        updateMeter(DOM.barVocab, DOM.valVocab, res.vocab);
+        updateMeter(DOM.barEmotion, DOM.valEmotion, res.emotion);
+
+        // Update Confidence
+        let conf = "LOW";
+        let color = "var(--text-muted)";
+        if (Math.abs(res.aiProb - res.humanProb) > 60) { conf = "HIGH"; color = "var(--neon-green)"; }
+        else if (Math.abs(res.aiProb - res.humanProb) > 30) { conf = "MEDIUM"; color = "#ffaa00"; }
+        DOM.confBadge.innerHTML = `Confidence: <span style="color:${color}">${conf}</span>`;
+
+        // Render Reasons
+        DOM.flaggedList.innerHTML = '';
+        res.reasons.forEach(r => {
+            let li = document.createElement('li');
+            li.innerText = r;
+            DOM.flaggedList.appendChild(li);
+        });
+
+        // Generate Highlighted Text
+        let hlText = originalText;
+        // Escape HTML to prevent XSS during local use
+        hlText = hlText.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        
+        res.foundPhrases.forEach(phrase => {
+            const regex = new RegExp(`\\b(${phrase})\\b`, 'gi');
+            hlText = hlText.replace(regex, `<span class="hl-ai" title="Known AI Generative Phrase">$1</span>`);
+        });
+
+        // Highlight long sentences (structural flag)
+        const sentences = hlText.split(/([.!?]+)/);
+        let finalHtml = "";
+        for (let i = 0; i < sentences.length; i+=2) {
+            let s = sentences[i];
+            let punc = sentences[i+1] || "";
+            if (s.split(/\s+/).length > 25 && res.burstiness < 40) {
+                finalHtml += `<span class="hl-struct" title="Unusually uniform long sentence structure">${s}${punc}</span>`;
+            } else {
+                finalHtml += s + punc;
+            }
+        }
+
+        DOM.highlightBox.innerHTML = finalHtml.replace(/\n/g, "<br>");
+    }
+
+    function updateMeter(barEl, valEl, score) {
+        setTimeout(() => {
+            barEl.style.width = `${score}%`;
+            valEl.innerText = `${score}%`;
+        }, 100);
+    }
+
+    // --- HISTORY MANAGEMENT ---
+    function loadHistory() {
+        try {
+            const stored = localStorage.getItem('truthlens_history');
+            if (stored) appState.history = JSON.parse(stored);
+        } catch (e) {
+            console.error("Local storage access blocked.");
+        }
+    }
+
+    function saveToHistory(text, results) {
+        const item = {
+            id: Date.now(),
+            date: new Date().toLocaleString(),
+            textSnippet: text.substring(0, 60) + "...",
+            fullText: text,
+            aiProb: results.aiProb,
+            humanProb: results.humanProb
+        };
+        appState.history.unshift(item);
+        if (appState.history.length > 20) appState.history.pop(); // Keep last 20
+        
+        try {
+            localStorage.setItem('truthlens_history', JSON.stringify(appState.history));
+        } catch (e) {}
+        
+        renderHistory();
+    }
+
+    function renderHistory() {
+        DOM.historyGrid.innerHTML = '';
+        if (appState.history.length === 0) {
+            DOM.historyGrid.innerHTML = '<div style="color:var(--text-muted);">No analysis archives found.</div>';
+            return;
+        }
+
+        appState.history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            
+            let color = item.aiProb > 50 ? 'var(--neon-purple)' : 'var(--neon-blue)';
+            let label = item.aiProb > 50 ? `AI: ${item.aiProb}%` : `Human: ${item.humanProb}%`;
+
+            div.innerHTML = `
+                <div class="history-header">
+                    <span>${item.date}</span>
+                    <span class="history-score" style="color:${color}">${label}</span>
+                </div>
+                <div class="history-preview">${item.textSnippet}</div>
+            `;
+            
+            div.onclick = () => {
+                DOM.input.value = item.fullText;
+                updateStats();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                logTerm(`Restored archive from ${item.date}`);
+            };
+
+            DOM.historyGrid.appendChild(div);
+        });
+    }
+
+    function clearHistory() {
+        if(confirm("Purge all local forensic archives? This cannot be undone.")) {
+            appState.history = [];
+            localStorage.removeItem('truthlens_history');
+            renderHistory();
+            logTerm("Archives purged successfully.", "err");
+        }
+    }
+
+    function exportHistory() {
+        if (appState.history.length === 0) {
+            alert("No history to export.");
+            return;
+        }
+        
+        let report = "==================================================\n";
+        report += "       TRUTHLENS FORENSIC EXPORT REPORT\n";
+        report += "==================================================\n\n";
+
+        appState.history.forEach((h, index) => {
+            report += `[RECORD ${index + 1}] - Date: ${h.date}\n`;
+            report += `Scores: AI (${h.aiProb}%) | Human (${h.humanProb}%)\n`;
+            report += `Text Excerpt: ${h.fullText.substring(0, 150)}...\n`;
+            report += `--------------------------------------------------\n`;
+        });
+        report += "\nEnd of Report.\nDeveloped by Arideep Kanshabanik.";
+
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `truthlens_report_${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        logTerm("Generated TXT report export.");
+    }
+
+    // Run init on load
+    window.onload = init;
+
+</script>
+</body>
+</html>
